@@ -9,14 +9,14 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1" # Change as needed
+  region = "us-east-2" # Change as needed
 }
 
 variable "vpc_cidr"    { default = "10.0.0.0/16" }
-variable "db_username" { default = "postgres" }
-variable "db_password" { default = "mdonly123" }
-variable "db_name"     { default = "postgres" }
-variable "azs"         { default = ["us-east-1a", "us-east-1b"] }
+variable "db_username" { default = "mysql" }
+variable "db_password" { default = "MySecurePass123" }
+variable "db_name"     { default = "inventory" }
+variable "azs"         { default = ["us-east-2a", "us-east-2b"] }
 
 locals {
   public_subnets  = ["10.0.0.0/20", "10.0.48.0/20"]
@@ -28,13 +28,13 @@ resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
-  tags = { Name = "cinema-vpc" }
+  tags = { Name = "east2-vpc" }
 }
 
 # IGW
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
-  tags = { Name = "cinema-igw" }
+  tags = { Name = "east2-igw" }
 }
 
 # Subnets
@@ -103,7 +103,7 @@ resource "aws_route_table_association" "private" {
 resource "aws_security_group" "db" {
   name        = "rds-db-sg"
   vpc_id      = aws_vpc.main.id
-  description = "Allow PostgreSQL from anywhere (restrict for prod)"
+  description = "Allow mysql from anywhere (restrict for prod)"
   ingress {
     from_port   = 5432
     to_port     = 5432
@@ -121,17 +121,17 @@ resource "aws_security_group" "db" {
 
 # DB Subnet Group - use two private subnets in different AZs!
 resource "aws_db_subnet_group" "main" {
-  name       = "cinema-db-subnet-group"
+  name       = "my-db-subnet-group"
   subnet_ids = [aws_subnet.private[0].id, aws_subnet.private[1].id]
-  tags = { Name = "cinema-db-subnet-group" }
+  tags = { Name = "my-db-subnet-group" }
 }
 
-# RDS PostgreSQL 17.4
-resource "aws_db_instance" "postgres" {
+# RDS mysql 17.4
+resource "aws_db_instance" "mysql" {
   identifier              = var.db_name
   allocated_storage       = 20
-  engine                  = "postgres"
-  engine_version          = "17.4"
+  engine                  = "mysql"
+  engine_version          = "8.0.41"
   instance_class          = "db.t3.small"
   db_name                 = var.db_name
   username                = var.db_username
@@ -141,7 +141,7 @@ resource "aws_db_instance" "postgres" {
   publicly_accessible     = true
   multi_az                = true
   skip_final_snapshot     = true
-  tags = { Name = "cinema-postgres-db" }
+  tags = { Name = "my-mysql-db" }
 }
 
 # IAM Roles for EKS
@@ -245,6 +245,6 @@ resource "aws_eks_node_group" "main" {
 }
 
 output "rds_endpoint" {
-  description = "RDS PostgreSQL endpoint"
-  value       = aws_db_instance.postgres.endpoint
+  description = "RDS mysql endpoint"
+  value       = aws_db_instance.mysql.endpoint
 }
