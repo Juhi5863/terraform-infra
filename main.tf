@@ -128,7 +128,7 @@ resource "aws_db_subnet_group" "main" {
 
 # RDS mysql 17.4
 resource "aws_db_instance" "mysql" {
-  identifier              = mysqldatabase
+  identifier              = "mysqldatabase"
   allocated_storage       = 20
   engine                  = "mysql"
   engine_version          = "8.0.41"
