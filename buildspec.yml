@@ -22,7 +22,7 @@ phases:
   post_build:
     commands:
       - echo Applying Terraform...
-      - terraform destory -auto-approve -input=false 
+      - terraform destroy -auto-approve -input=false 
 
 artifacts:
   files:
